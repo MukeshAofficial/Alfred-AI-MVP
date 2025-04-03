@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import Header from "@/components/header"
-import Navigation from "@/components/navigation"
+import { Navigation } from "@/components/navigation"
 
 // Mock data for vendor services
 const mockServices = [
@@ -178,6 +178,7 @@ export default function ServicesPage() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Hotel Services" />
+      <Navigation />
 
       <main className="flex-1 container mx-auto px-4 py-6 pb-20">
         <div className="mb-6">
@@ -306,8 +307,6 @@ export default function ServicesPage() {
           )}
         </div>
       </main>
-
-      <Navigation />
     </div>
   )
 }

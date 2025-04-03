@@ -73,9 +73,11 @@ export async function middleware(request: NextRequest) {
     "/vendor/earnings",
     "/vendor/reviews",
     "/vendor/settings",
+    "/vendor/register",
     "/profile",
     "/bookings",
     "/receipts",
+    "/services"
   ]
 
   // Check if the current path is a protected route
@@ -90,13 +92,29 @@ export async function middleware(request: NextRequest) {
   if (session) {
     const { data: user } = await supabase.from("profiles").select("role").eq("id", session.user.id).single()
 
-    // Admin routes
+    // If on auth page and already logged in, redirect based on role
+    if (request.nextUrl.pathname === "/auth") {
+      if (user?.role === "guest") {
+        return NextResponse.redirect(new URL("/services", request.url))
+      } else if (user?.role === "hotel") {
+        return NextResponse.redirect(new URL("/admin/dashboard", request.url))
+      } else if (user?.role === "vendor") {
+        return NextResponse.redirect(new URL("/vendor/dashboard", request.url))
+      }
+    }
+
+    // Admin routes protection
     if (request.nextUrl.pathname.startsWith("/admin") && user?.role !== "hotel") {
       return NextResponse.redirect(new URL("/", request.url))
     }
 
-    // Vendor routes
+    // Vendor routes protection
     if (request.nextUrl.pathname.startsWith("/vendor") && user?.role !== "vendor") {
+      return NextResponse.redirect(new URL("/", request.url))
+    }
+
+    // Guest routes protection
+    if (request.nextUrl.pathname.startsWith("/services") && user?.role !== "guest") {
       return NextResponse.redirect(new URL("/", request.url))
     }
   }

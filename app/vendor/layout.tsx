@@ -1,7 +1,6 @@
 import type React from "react"
 import VendorNavigation from "@/components/vendor/vendor-navigation"
 import ProtectedRoute from "@/components/auth/protected-route"
-import { ThemeProvider } from "@/components/theme-provider"
 
 export default function VendorLayout({
   children,
@@ -9,14 +8,16 @@ export default function VendorLayout({
   children: React.ReactNode
 }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <ProtectedRoute requiredRole="vendor">
-        <div className="flex min-h-screen flex-col">
-          <VendorNavigation />
-          <main className="flex-1 p-6">{children}</main>
+    <ProtectedRoute requiredRole="vendor">
+      <div className="flex min-h-screen bg-gray-50">
+        <VendorNavigation />
+        <div className="flex-1 w-full md:ml-64">
+          <main className="container mx-auto px-4 py-8">
+            {children}
+          </main>
         </div>
-      </ProtectedRoute>
-    </ThemeProvider>
+      </div>
+    </ProtectedRoute>
   )
 }
 

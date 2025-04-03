@@ -108,7 +108,7 @@ export default function HowItWorksSection() {
     {
       icon: <QrCode className="h-6 w-6" />,
       title: "For Guests",
-      color: "bg-primary",
+      color: "bg-orange-500",
       steps: [
         {
           icon: <QrCode className="h-4 w-4" />,

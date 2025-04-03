@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import Header from "@/components/header"
-import Navigation from "@/components/navigation"
+import { Navigation } from "@/components/navigation"
 import { useMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 

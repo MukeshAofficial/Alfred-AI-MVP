@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { ChevronLeft, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 const formSchema = z
   .object({
@@ -34,6 +35,7 @@ export function RegisterForm({ role, onRoleChange }: RegisterFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClientComponentClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,28 +51,46 @@ export function RegisterForm({ role, onRoleChange }: RegisterFormProps) {
     setIsLoading(true)
 
     try {
-      // Here you would implement the actual registration logic with Supabase
-      console.log("Register values:", values, "Role:", role)
+      // Register the user with Supabase
+      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            name: values.name,
+            role: role,
+          },
+        },
+      })
 
-      // Simulate registration success
+      if (signUpError) throw signUpError
+
+      // Check if user was created successfully
+      if (!user) throw new Error("Failed to create user")
+
       toast({
         title: "Registration successful",
         description: "Your account has been created successfully.",
       })
 
       // Redirect based on role
-      if (role === "guest") {
-        router.push("/explore")
-      } else if (role === "hotel") {
-        router.push("/admin/dashboard")
-      } else if (role === "vendor") {
-        router.push("/vendor/dashboard")
+      const redirects = {
+        guest: "/services",
+        hotel: "/admin/upload-services",
+        vendor: "/vendor/register"
       }
-    } catch (error) {
+
+      const redirectUrl = redirects[role as keyof typeof redirects]
+      if (redirectUrl) {
+        router.push(redirectUrl)
+      }
+      
+      router.refresh()
+    } catch (error: any) {
       console.error(error)
       toast({
         title: "Registration failed",
-        description: "There was an error creating your account. Please try again.",
+        description: error.message || "There was an error creating your account. Please try again.",
         variant: "destructive",
       })
     } finally {

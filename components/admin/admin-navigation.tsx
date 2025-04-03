@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, Home, Calendar, Hotel, Users, Settings, LogOut, Moon, Sun, Bell } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useTheme } from "next-themes"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 export default function AdminNavigation() {
   const pathname = usePathname()
@@ -17,6 +18,8 @@ export default function AdminNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
+  const supabase = createClientComponentClient()
 
   useEffect(() => {
     setMounted(true)
@@ -39,14 +42,19 @@ export default function AdminNavigation() {
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ]
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/auth")
+  }
+
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 w-full transition-all duration-300 bg-background/80 backdrop-blur-md",
+        "fixed top-0 left-0 w-full transition-all duration-300 bg-background/80 backdrop-blur-md",
         isScrolled ? "shadow-sm border-b" : "",
       )}
     >
-      <div className="container flex items-center justify-between h-16 px-4">
+      <div className="flex items-center justify-between h-16 px-4 md:px-6">
         <div className="flex items-center gap-2">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild className="lg:hidden">
@@ -111,24 +119,21 @@ export default function AdminNavigation() {
         </div>
 
         <nav className="hidden lg:flex items-center space-x-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  isActive ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400" : "hover:bg-muted",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </Link>
-            )
-          })}
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                pathname === item.href
+                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
+                  : "hover:bg-muted",
+              )}
+            >
+              <item.icon className="h-4 w-4" />
+              <span>{item.name}</span>
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -158,9 +163,11 @@ export default function AdminNavigation() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600 dark:text-red-400">Logout</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => router.push("/admin/profile")}>Profile</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => router.push("/admin/settings")}>Settings</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600 dark:text-red-400" onSelect={handleSignOut}>
+                Sign Out
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

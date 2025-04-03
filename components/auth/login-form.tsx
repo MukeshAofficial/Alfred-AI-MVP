@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input"
 import { ChevronLeft, Eye, EyeOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -26,6 +27,7 @@ export function LoginForm({ role, onRoleChange }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const supabase = createClientComponentClient()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,28 +41,55 @@ export function LoginForm({ role, onRoleChange }: LoginFormProps) {
     setIsLoading(true)
 
     try {
-      // Here you would implement the actual login logic with Supabase
-      console.log("Login values:", values, "Role:", role)
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      })
 
-      // Simulate login success
+      if (signInError) {
+        if (signInError.message === "Invalid login credentials") {
+          throw new Error("Invalid email or password. Please try again.")
+        }
+        throw signInError
+      }
+
+      // Check user role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user?.id)
+        .single()
+
+      if (profileError) throw profileError
+
+      // Verify role matches
+      if (profile.role !== role) {
+        throw new Error(`Please sign in with the correct role. You are registered as a ${profile.role}.`)
+      }
+
       toast({
         title: "Login successful",
         description: "You have been logged in successfully.",
       })
 
-      // Redirect based on role
-      if (role === "guest") {
-        router.push("/explore")
-      } else if (role === "hotel") {
-        router.push("/admin/dashboard")
-      } else if (role === "vendor") {
-        router.push("/vendor/dashboard")
+      // Redirect based on role and action
+      const redirects = {
+        guest: "/services",
+        hotel: "/admin/dashboard",
+        vendor: "/vendor/dashboard"
       }
-    } catch (error) {
+
+      const redirectUrl = redirects[role as keyof typeof redirects]
+      if (redirectUrl) {
+        await router.push(redirectUrl)
+      }
+      
+      router.refresh()
+    } catch (error: any) {
       console.error(error)
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive",
       })
     } finally {

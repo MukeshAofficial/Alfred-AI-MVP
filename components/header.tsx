@@ -1,75 +1,58 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, Bell, Search } from "lucide-react"
+import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useMobile } from "@/hooks/use-mobile"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface HeaderProps {
   title: string
-  showBackButton?: boolean
   showNotification?: boolean
-  showSearch?: boolean
 }
 
-export default function Header({
-  title,
-  showBackButton = false,
-  showNotification = false,
-  showSearch = false,
-}: HeaderProps) {
+export default function Header({ title, showNotification = false }: HeaderProps) {
   const router = useRouter()
-  const [isScrolled, setIsScrolled] = useState(false)
-  const isMobile = useMobile()
+  const supabase = createClientComponentClient()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
-
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  // If not mobile, we don't need to show the header since we have the desktop navigation
-  if (!isMobile) {
-    return (
-      <div className="py-4 px-6">
-        <h1 className="text-2xl font-bold">{title}</h1>
-      </div>
-    )
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push("/auth")
   }
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 w-full transition-all duration-300 bg-background/80 backdrop-blur-md",
-        isScrolled ? "shadow-sm" : "",
-      )}
-    >
-      <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          {showBackButton && (
-            <Button variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          )}
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex">
           <h1 className="text-xl font-semibold">{title}</h1>
         </div>
-
-        <div className="flex items-center gap-2">
-          {showSearch && (
-            <Button variant="ghost" size="icon">
-              <Search className="h-5 w-5" />
-            </Button>
-          )}
+        <div className="flex flex-1 items-center justify-end space-x-2">
           {showNotification && (
-            <Button variant="ghost" size="icon" onClick={() => router.push("/notifications")}>
+            <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
+              <span className="sr-only">Notifications</span>
             </Button>
           )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/placeholder-user.jpg" alt="User" />
+                  <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => router.push("/profile")}>Profile</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => router.push("/settings")}>Settings</DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600" onSelect={handleSignOut}>
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

@@ -14,11 +14,22 @@ import {
   Search,
   ShoppingCart,
   User,
+  Home,
+  Phone,
+  Settings,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useMobile } from "@/hooks/use-mobile"
 import { useAuth } from "@/contexts/auth-context"
+import { cn } from "@/lib/utils"
+import { LucideIcon } from "lucide-react"
+
+type NavItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+}
 
 export function Navigation() {
   const pathname = usePathname()
@@ -31,22 +42,27 @@ export function Navigation() {
     setIsMenuOpen(false)
   }, [pathname])
 
-  const navItems = [
-    { href: "/explore", label: "Explore", icon: <Search className="h-5 w-5" /> },
-    { href: "/services", label: "Services", icon: <Package className="h-5 w-5" /> },
-    { href: "/restaurants", label: "Dining", icon: <ChefHat className="h-5 w-5" /> },
-    { href: "/bookings", label: "Bookings", icon: <Calendar className="h-5 w-5" /> },
-    { href: "/concierge", label: "Concierge", icon: <MessageSquare className="h-5 w-5" /> },
+  const navItems: NavItem[] = [
+    {
+      name: "Dashboard",
+      href: "/dashboard",
+      icon: Home
+    },
+    { name: "Services", href: "/services", icon: Search },
+    { name: "Bookings", href: "/bookings", icon: Calendar },
+    { name: "Concierge", href: "/concierge", icon: MessageSquare },
+    { name: "Contact", href: "/contact", icon: Phone },
+    { name: "Settings", href: "/settings", icon: Settings },
   ]
 
-  const secondaryNavItems = [
-    { href: "/profile", label: "Profile", icon: <User className="h-5 w-5" /> },
-    { href: "/notifications", label: "Notifications", icon: <Bell className="h-5 w-5" /> },
-    { href: "/receipts", label: "Receipts", icon: <CreditCard className="h-5 w-5" /> },
-    { href: "/add-ons", label: "Add-ons", icon: <ShoppingCart className="h-5 w-5" /> },
+  const secondaryNavItems: NavItem[] = [
+    { name: "Profile", href: "/profile", icon: User },
+    { name: "Notifications", href: "/notifications", icon: Bell },
+    { name: "Receipts", href: "/receipts", icon: CreditCard },
+    { name: "Add-ons", href: "/add-ons", icon: ShoppingCart },
   ]
 
-  const renderNavItems = (items: typeof navItems) => (
+  const renderNavItems = (items: NavItem[]) => (
     <ul className="space-y-2">
       {items.map((item) => (
         <li key={item.href}>
@@ -56,8 +72,8 @@ export function Navigation() {
               pathname === item.href ? "bg-primary text-primary-foreground" : "hover:bg-muted"
             }`}
           >
-            {item.icon}
-            <span>{item.label}</span>
+            <item.icon className="h-5 w-5" />
+            <span>{item.name}</span>
           </Link>
         </li>
       ))}
@@ -67,82 +83,63 @@ export function Navigation() {
   // Mobile Navigation
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t p-2">
-        <div className="flex justify-around items-center">
-          <Link
-            href="/explore"
-            className={`flex flex-col items-center p-2 ${
-              pathname === "/explore" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Search className="h-5 w-5" />
-            <span className="text-xs mt-1">Explore</span>
-          </Link>
-          <Link
-            href="/services"
-            className={`flex flex-col items-center p-2 ${
-              pathname === "/services" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Package className="h-5 w-5" />
-            <span className="text-xs mt-1">Services</span>
-          </Link>
-          <Link
-            href="/concierge"
-            className={`flex flex-col items-center p-2 ${
-              pathname === "/concierge" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <MessageSquare className="h-5 w-5" />
-            <span className="text-xs mt-1">Concierge</span>
-          </Link>
-          <Link
-            href="/bookings"
-            className={`flex flex-col items-center p-2 ${
-              pathname === "/bookings" ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            <Calendar className="h-5 w-5" />
-            <span className="text-xs mt-1">Bookings</span>
-          </Link>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t md:hidden">
+        <div className="container flex items-center justify-between p-2">
+          {navItems.slice(0, 4).map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href
 
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="flex flex-col items-center p-2 text-muted-foreground">
-                <Menu className="h-5 w-5" />
-                <span className="text-xs mt-1">Menu</span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[80%] sm:w-[350px]">
-              <div className="flex flex-col h-full">
-                <div className="flex items-center justify-between py-4 border-b">
-                  <Link href="/" className="flex items-center space-x-2">
-                    <span className="font-bold text-xl">AI Butler</span>
-                  </Link>
-                </div>
-
-                <div className="flex-1 overflow-auto py-4 space-y-6">
-                  {renderNavItems(navItems)}
-
-                  <div className="border-t pt-4">{renderNavItems(secondaryNavItems)}</div>
-                </div>
-
-                <div className="border-t pt-4 pb-2">
-                  {user ? (
-                    <Button variant="outline" className="w-full" onClick={signOut}>
-                      Sign Out
-                    </Button>
-                  ) : (
-                    <Link href="/auth">
-                      <Button className="w-full">Sign In</Button>
-                    </Link>
+            return (
+              <Link key={item.name} href={item.href}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "flex flex-col items-center gap-1 h-auto py-2",
+                    isActive && "text-primary"
                   )}
-                </div>
+                >
+                  <Icon className="h-5 w-5" />
+                  <span className="text-xs">{item.name}</span>
+                </Button>
+              </Link>
+            )
+          })}
+
+          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex flex-col items-center gap-1 h-auto py-2">
+                <Menu className="h-5 w-5" />
+                <span className="text-xs">Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[50vh]">
+              <div className="grid grid-cols-3 gap-4 py-4">
+                {navItems.map((item) => {
+                  const Icon = item.icon
+                  const isActive = pathname === item.href
+
+                  return (
+                    <Link key={item.name} href={item.href} onClick={() => setIsMenuOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "w-full flex flex-col items-center gap-2 h-auto py-4",
+                          isActive && "text-primary"
+                        )}
+                      >
+                        <Icon className="h-6 w-6" />
+                        <span className="text-sm">{item.name}</span>
+                      </Button>
+                    </Link>
+                  )
+                })}
               </div>
             </SheetContent>
           </Sheet>
         </div>
-      </div>
+      </nav>
     )
   }
 
